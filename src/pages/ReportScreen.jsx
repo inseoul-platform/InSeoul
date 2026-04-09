@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
 import useAppStore from '../store/useAppStore';
 import {
     calcGoldenCross,
@@ -145,9 +144,7 @@ export default function ReportScreen() {
     const priceRisk = getRiskLevel(priceStress?.delayMonths);
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-
+        <div className="flex flex-col">
             <div className="max-w-5xl mx-auto w-full flex flex-col flex-grow text-left pb-16">
 
                 {/* ── 데모 안내 배너 ─────────────────────────────── */}

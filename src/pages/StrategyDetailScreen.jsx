@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Header from '../components/Header';
 import useAppStore from '../store/useAppStore';
 import { calcGoldenCross, calcRequiredCapital, formatKRW, formatYearMonth } from '../utils/calculator';
 
@@ -190,9 +189,7 @@ export default function StrategyDetailScreen() {
     ];
 
     return (
-        <div className="flex flex-col min-h-screen text-left">
-            <Header />
-
+        <div className="flex flex-col text-left">
             <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 md:p-10 flex flex-col gap-6 pb-16">
                 {/* 뒤로가기 */}
                 <button
