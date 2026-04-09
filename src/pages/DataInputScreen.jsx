@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Header from '../components/Header';
 import useAppStore from '../store/useAppStore';
 import { formatKRW } from '../utils/calculator';
 
@@ -139,9 +138,7 @@ export default function DataInputScreen() {
             : 'border-slate-200 dark:border-slate-700 focus:ring-primary/50';
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header />
-
+        <div className="flex flex-col">
             <main className="flex-1 flex justify-center px-4 sm:px-10 py-6 sm:py-10">
                 <div className="flex flex-col max-w-[960px] w-full gap-6 sm:gap-8">
 

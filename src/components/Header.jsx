@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAppStore from '../store/useAppStore';
 
+
 const NAV_ITEMS = [
     { to: '/', label: '데이터 입력', tab: 'input' },
     { to: '/dashboard', label: '대시보드', tab: 'dashboard' },
@@ -16,7 +17,7 @@ const NAV_ITEMS = [
  */
 export default function Header({ showSearch = false, onSearch }) {
     const location = useLocation();
-    const { isDark, toggleDark } = useAppStore();
+    const { isDark, toggleDark, toggleChat } = useAppStore();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const isActive = (tab) => {
@@ -90,6 +91,17 @@ export default function Header({ showSearch = false, onSearch }) {
                             </Link>
                         ))}
                     </nav>
+
+                    {/* 챗봇 토글 */}
+                    <button
+                        onClick={toggleChat}
+                        className="bg-primary/10 dark:bg-primary/20 rounded-full size-9 sm:size-11 flex items-center justify-center cursor-pointer interactive-element hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors duration-300 shrink-0"
+                        aria-label="AI 어드바이저 열기/닫기"
+                    >
+                        <span className="material-symbols-outlined text-primary transition-colors !text-[20px]">
+                            smart_toy
+                        </span>
+                    </button>
 
                     {/* 다크모드 토글 */}
                     <button

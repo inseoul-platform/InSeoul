@@ -3,7 +3,6 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import Header from '../components/Header';
 import useAppStore from '../store/useAppStore';
 import {
     calcGoldenCross, buildChartData, calcRequiredCapital,
@@ -94,8 +93,7 @@ export default function DashboardScreen() {
         ? chartData.find((d) => d.month >= goldenCross.months)?.year : null;
 
     return (
-        <div className="flex flex-col min-h-screen overflow-x-hidden">
-            <Header />
+        <div className="flex flex-col overflow-x-hidden">
             <main className="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 md:p-10 flex flex-col gap-6 sm:gap-8">
                 <div className="flex flex-col gap-1 text-left">
                     <h1 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight break-keep">골든크로스 분석 대시보드</h1>

@@ -82,6 +82,19 @@ const useAppStore = create(
                 const { cash, monthlySavings, targetAmount } = get().userProfile;
                 return cash > 0 && monthlySavings > 0 && targetAmount > 0;
             },
+
+            // ── 챗봇 ──────────────────────────────────
+            chatOpen: true,
+            chatMessages: [], // { role: 'user'|'assistant', content: string, timestamp: number }
+
+            toggleChat: () => set((s) => ({ chatOpen: !s.chatOpen })),
+
+            addChatMessage: (msg) =>
+                set((s) => ({
+                    chatMessages: [...s.chatMessages.slice(-49), msg],
+                })),
+
+            clearChatHistory: () => set({ chatMessages: [] }),
         }),
         {
             name: 'inseoul-storage', // localStorage key
@@ -90,6 +103,8 @@ const useAppStore = create(
                 simConfig: state.simConfig,
                 isDark: state.isDark,
                 apiPrices: state.apiPrices,
+                chatOpen: state.chatOpen,
+                chatMessages: state.chatMessages,
             }),
         }
     )

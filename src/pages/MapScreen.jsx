@@ -603,7 +603,6 @@
 // }
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Header from '../components/Header';
 import useAppStore from '../store/useAppStore';
 import { formatKRW, calcGoldenCross } from '../utils/calculator';
 import { loadSeoulAptPrices } from '../services/api';
@@ -776,8 +775,7 @@ export default function MapScreen() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-            <Header showSearch={true} onSearch={handleSearch} />
+        <div className="flex flex-col overflow-x-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
 
             {/* 로딩 오버레이 */}
             {isLoading && (
@@ -817,6 +815,20 @@ export default function MapScreen() {
                         <header className="hidden lg:block">
                             <h2 className="text-xl font-bold">타겟팅 맵</h2>
                             <p className="text-xs text-slate-500">내 자산 기준 서울 25개 구 분석</p>
+                            <div className="relative mt-3 group">
+                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors text-lg">
+                                    search
+                                </span>
+                                <input
+                                    className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary/50 text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400 transition-all duration-300"
+                                    placeholder="지역 검색 (예: 마포구)"
+                                    type="text"
+                                    aria-label="지역 검색"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleSearch(e.target.value);
+                                    }}
+                                />
+                            </div>
                         </header>
 
                         {/* 자산 요약 */}
