@@ -44,6 +44,83 @@
 
 ---
 
+## 🤖 AI 어드바이저 (RAG 챗봇)
+
+우측 사이드바의 **인서울 AI 어드바이저**는 단순 LLM 챗봇이 아닌, 서비스 전용 지식 베이스를 활용한 **RAG(Retrieval-Augmented Generation)** 기반 어드바이저입니다. 사용자가 현재 보고 있는 페이지와 입력한 재무 데이터를 컨텍스트로 함께 전달하여, 개인화된 부동산 금융 조언을 제공합니다.
+
+### 전체 흐름
+
+```
+사용자 질문
+    │
+    ▼
+[Retriever] SentenceTransformer 임베딩 → ChromaDB 코사인 유사도 검색 (top-4 청크)
+    │
+    ▼
+[Prompt Builder] 시스템 역할 + 검색 문서 + 사용자 컨텍스트(페이지·자산·시뮬설정) + 대화 히스토리(최대 10턴)
+    │
+    ▼
+[OpenAI API] gpt-5-nano 스트리밍 호출
+    │
+    ▼
+[SSE 스트리밍] data: {"type": "delta", "content": "..."} → 프론트엔드 실시간 렌더링
+```
+
+### 지식 베이스
+
+`backend/knowledge/` 디렉터리의 Markdown 파일 5종이 RAG의 근거 문서입니다.
+
+| 파일 | 내용 |
+|------|------|
+| `calculation_logic.md` | D-Day 산출 공식, FV 계산, LTV·DSR 로직 |
+| `financial_concepts.md` | LTV, DSR, 취득세 등 금융 개념 설명 |
+| `loan_products.md` | 보금자리론, 디딤돌대출 등 대출 상품 정보 |
+| `seoul_districts.md` | 서울 자치구별 아파트 시세 및 특성 |
+| `strategies.md` | 징검다리 전략, 경기도 요충지 투자 전략 |
+
+문서는 `##` 헤딩 기준으로 청킹(최대 500토큰, 50토큰 오버랩)된 뒤 `paraphrase-multilingual-MiniLM-L12-v2` 모델로 임베딩되어 ChromaDB에 저장됩니다.
+
+### 컨텍스트 인식
+
+AI 어드바이저는 현재 상태를 시스템 프롬프트에 자동으로 포함합니다.
+
+- **현재 페이지**: 어느 화면에서 질문하는지 (대시보드, 리포트, 지도 등)
+- **사용자 프로필**: 보유 현금, 월 저축액, 연 소득, 목표 아파트 가격 등
+- **시뮬레이션 설정**: LTV 비율, 아파트 연간 상승률, 투자 수익률 등
+
+덕분에 같은 "LTV가 뭔가요?" 질문이라도 사용자의 실제 수치를 바탕으로 구체적인 답변이 제공됩니다. 각 페이지에는 **힌트 칩**도 표시되어 처음 사용자도 쉽게 질문을 시작할 수 있습니다.
+
+### 백엔드 실행 방법
+
+```bash
+cd backend
+
+# 1. 의존성 설치
+pip install -r requirements.txt
+
+# 2. 환경변수 설정
+cp .env.example .env
+# .env 파일에서 OPENAI_API_KEY 입력
+
+# 3. 지식 베이스 인제스트 (최초 1회 또는 knowledge/ 변경 시)
+python scripts/ingest.py
+
+# 4. FastAPI 서버 실행
+uvicorn main:app --reload --port 8000
+```
+
+`.env.example`에서 설정 가능한 항목:
+
+| 환경변수 | 기본값 | 설명 |
+|----------|--------|------|
+| `OPENAI_API_KEY` | — | OpenAI API 키 (필수) |
+| `CHROMA_PERSIST_DIR` | `./vectorstore` | ChromaDB 저장 경로 |
+| `ALLOWED_ORIGINS` | `http://localhost:5173` 등 | CORS 허용 출처 |
+
+프론트엔드에서 백엔드 주소를 변경하려면 `.env` 파일에 `VITE_CHATBOT_API_URL=http://...` 를 추가하세요.
+
+---
+
 ## 🔒 보안 및 신뢰성
 * **Local-First Data:** 사용자가 입력한 모든 민감한 재무 데이터는 서버에 저장되지 않고 브라우저의 로컬 스토리지에만 보관되어 개인정보 유출 우려가 없습니다.
 * **Transparent Logic:** 모든 계산 근거와 공식을 투명하게 안내하여 사용자가 시뮬레이션 결과를 신뢰할 수 있도록 돕습니다.
