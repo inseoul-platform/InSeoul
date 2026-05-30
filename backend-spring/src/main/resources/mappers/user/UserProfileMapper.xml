@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inseoul.user.mapper.UserProfileMapper">
+
+    <resultMap id="profileResultMap" type="com.inseoul.user.domain.UserProfile">
+        <id     property="userId"         column="user_id"/>
+        <result property="cash"           column="cash"/>
+        <result property="monthlySavings" column="monthly_savings"/>
+        <result property="targetAmount"   column="target_amount"/>
+        <result property="age"            column="age"/>
+        <result property="income"         column="income"/>
+        <result property="updatedAt"      column="updated_at"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="profileResultMap">
+        SELECT * FROM user_profiles WHERE user_id = #{userId}
+    </select>
+
+    <update id="update">
+        UPDATE user_profiles
+        SET cash           = #{cash},
+            monthly_savings = #{monthlySavings},
+            target_amount  = #{targetAmount},
+            age            = #{age},
+            income         = #{income}
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

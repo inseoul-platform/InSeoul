@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inseoul.strategy.mapper.StrategyMapper">
+
+    <resultMap id="strategyResultMap" type="com.inseoul.strategy.domain.Strategy">
+        <id     property="type"           column="type"/>
+        <result property="badge"          column="badge"/>
+        <result property="title"          column="title"/>
+        <result property="subtitle"       column="subtitle"/>
+        <result property="riskLevel"      column="risk_level"/>
+        <result property="riskBadge"      column="risk_badge"/>
+        <result property="accentGradient" column="accent_gradient"/>
+        <result property="targetPrice"    column="target_price"/>
+    </resultMap>
+
+    <resultMap id="stepResultMap" type="com.inseoul.strategy.domain.StrategyStep">
+        <id     property="id"           column="id"/>
+        <result property="strategyType" column="strategy_type"/>
+        <result property="stepOrder"    column="step_order"/>
+        <result property="title"        column="title"/>
+        <result property="description"  column="description"/>
+        <result property="icon"         column="icon"/>
+        <result property="phasePct"     column="phase_pct"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="strategyResultMap">
+        SELECT type, badge, title, subtitle, risk_level, risk_badge, accent_gradient, target_price
+        FROM strategies
+        ORDER BY type
+    </select>
+
+    <select id="findByType" resultMap="strategyResultMap">
+        SELECT type, badge, title, subtitle, risk_level, risk_badge, accent_gradient, target_price
+        FROM strategies WHERE type = #{type}
+    </select>
+
+    <select id="findStepsByType" resultMap="stepResultMap">
+        SELECT id, strategy_type, step_order, title, description, icon, phase_pct
+        FROM strategy_steps
+        WHERE strategy_type = #{type}
+        ORDER BY step_order
+    </select>
+
+</mapper>

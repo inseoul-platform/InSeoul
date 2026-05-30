@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inseoul.user.mapper.SimConfigMapper">
+
+    <resultMap id="simConfigResultMap" type="com.inseoul.user.domain.SimConfig">
+        <id     property="userId"                column="user_id"/>
+        <result property="savingsIncreaseRate"   column="savings_increase_rate"/>
+        <result property="investmentReturnRate"  column="investment_return_rate"/>
+        <result property="apartmentAnnualRise"   column="apartment_annual_rise"/>
+        <result property="ltvRatio"              column="ltv_ratio"/>
+        <result property="acquisitionTaxRate"    column="acquisition_tax_rate"/>
+        <result property="updatedAt"             column="updated_at"/>
+    </resultMap>
+
+    <select id="findByUserId" resultMap="simConfigResultMap">
+        SELECT * FROM user_sim_configs WHERE user_id = #{userId}
+    </select>
+
+    <update id="update">
+        UPDATE user_sim_configs
+        SET savings_increase_rate  = #{savingsIncreaseRate},
+            investment_return_rate = #{investmentReturnRate},
+            apartment_annual_rise  = #{apartmentAnnualRise},
+            ltv_ratio              = #{ltvRatio},
+            acquisition_tax_rate   = #{acquisitionTaxRate}
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>

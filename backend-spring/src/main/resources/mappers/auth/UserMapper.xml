@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inseoul.auth.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.inseoul.auth.domain.User">
+        <id     property="id"             column="id"/>
+        <result property="email"          column="email"/>
+        <result property="passwordHash"   column="password_hash"/>
+        <result property="provider"       column="provider"/>
+        <result property="providerUserId" column="provider_user_id"/>
+        <result property="nickname"       column="nickname"/>
+        <result property="role"           column="role"/>
+        <result property="createdAt"      column="created_at"/>
+        <result property="updatedAt"      column="updated_at"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (email, password_hash, provider, provider_user_id, nickname, role)
+        VALUES (#{email}, #{passwordHash}, #{provider}, #{providerUserId}, #{nickname}, #{role})
+    </insert>
+
+    <select id="findByEmail" resultMap="userResultMap">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findById" resultMap="userResultMap">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM users WHERE email = #{email})
+    </select>
+
+    <select id="findByProviderAndProviderUserId" resultMap="userResultMap">
+        SELECT u.* FROM users u
+        JOIN oauth_accounts o ON u.id = o.user_id
+        WHERE o.provider = #{provider} AND o.provider_user_id = #{providerUserId}
+    </select>
+
+    <insert id="insertOAuthAccount">
+        INSERT INTO oauth_accounts (user_id, provider, provider_user_id)
+        VALUES (#{userId}, #{provider}, #{providerUserId})
+        ON DUPLICATE KEY UPDATE linked_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <insert id="insertDefaultProfile">
+        INSERT IGNORE INTO user_profiles (user_id, cash, monthly_savings, target_amount, age, income)
+        VALUES (#{userId}, 0, 0, 0, 30, 500)
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM users WHERE id = #{id}
+    </delete>
+
+    <insert id="insertDefaultSimConfig">
+        INSERT IGNORE INTO user_sim_configs
+            (user_id, savings_increase_rate, investment_return_rate, apartment_annual_rise, ltv_ratio, acquisition_tax_rate)
+        VALUES (#{userId}, 5.00, 8.00, 3.00, 0.500, 0.0350)
+    </insert>
+
+</mapper>

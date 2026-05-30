@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.inseoul.district.mapper.DistrictPriceCacheMapper">
+
+    <resultMap id="cacheResultMap" type="com.inseoul.district.domain.DistrictPriceCache">
+        <id     property="code"      column="code"/>
+        <result property="tradeAvg"  column="trade_avg"/>
+        <result property="rentAvg"   column="rent_avg"/>
+        <result property="fetchedAt" column="fetched_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="cacheResultMap">
+        SELECT code, trade_avg, rent_avg, fetched_at FROM district_price_cache
+    </select>
+
+    <select id="findByCode" resultMap="cacheResultMap">
+        SELECT code, trade_avg, rent_avg, fetched_at FROM district_price_cache WHERE code = #{code}
+    </select>
+
+    <insert id="upsert">
+        INSERT INTO district_price_cache (code, trade_avg, rent_avg, fetched_at)
+        VALUES (#{code}, #{tradeAvg}, #{rentAvg}, NOW())
+        ON DUPLICATE KEY UPDATE
+            trade_avg  = VALUES(trade_avg),
+            rent_avg   = VALUES(rent_avg),
+            fetched_at = NOW()
+    </insert>
+
+    <insert id="upsertAll">
+        INSERT INTO district_price_cache (code, trade_avg, rent_avg, fetched_at)
+        VALUES
+        <foreach collection="list" item="c" separator=",">
+            (#{c.code}, #{c.tradeAvg}, #{c.rentAvg}, NOW())
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+            trade_avg  = VALUES(trade_avg),
+            rent_avg   = VALUES(rent_avg),
+            fetched_at = NOW()
+    </insert>
+
+</mapper>
