@@ -1,142 +1,341 @@
-# 🚀 인서울(InSeoul) 프로젝트: 데이터로 설계하는 내 집 마련 최단 경로
+# InSeoul — 데이터로 설계하는 내 집 마련 최단 경로
 
 > **"막막한 서울 내 집 마련, 감이 아닌 데이터로 확신을 드립니다."**
-> 안녕하세요, **인서울 프로젝트의 PM**입니다. 우리 서비스는 복잡한 부동산 시장에서 사용자가 길을 잃지 않도록, 개인의 재무 상태와 시장 변수를 결합하여 정교한 '내 집 마련 시뮬레이션'을 제공하는 SaaS 플랫폼입니다.
+
+서울 아파트 구매 시뮬레이터. 개인 재무 상태와 시장 변수를 결합하여 **골든 크로스(자산 성장선과 매수 가능가가 교차하는 시점)**를 예측하고 징검다리 전략을 제시합니다.
 
 ---
 
-## 🏗️ 프로젝트 개요
-많은 이들이 서울 입성을 꿈꾸지만, 대출 규제(LTV/DSR)와 시시각각 변하는 금리 앞에 좌절합니다. **인서울(InSeoul)**은 마이데이터 연동 없이도 사용자가 직접 입력한 데이터를 기반으로 **'골든 크로스(자산 성장 곡선과 매수 가능 가격이 만나는 지점)'**를 예측하고, 현실적인 **'징검다리 전략'**을 제시합니다.
+## 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  Browser (Vite + React)  :5173                          │
+│  src/services/apiClient  →  JWT Bearer 자동 첨부        │
+└─────────┬──────────────────────────────┬────────────────┘
+          │ /api/**                       │ /api/chat (SSE)
+          ▼                               ▼
+┌─────────────────────┐       ┌──────────────────────┐
+│  Spring Boot  :8080 │       │  Spring Boot  :8080  │
+│  (MyBatis + MySQL)  │──────▶│  ChatRelayService    │
+│  JWT / OAuth2       │       │  (WebClient)         │
+└─────────┬───────────┘       └──────────┬───────────┘
+          │ Flyway                        │ POST /chat
+          ▼                               ▼
+┌─────────────────────┐       ┌──────────────────────┐
+│  MySQL 8  :3306     │       │  FastAPI  :8000       │
+│  inseoul DB         │       │  RAG 챗봇 (ChromaDB)  │
+└─────────────────────┘       └──────────────────────┘
+```
+
+| 서비스 | 기술 | 포트 | 역할 |
+|--------|------|------|------|
+| **frontend** | Vite + React + Tailwind | 5173 | SPA, 시뮬레이션 UI |
+| **backend-spring** | Spring Boot 3.5 / Java 21 / MyBatis | 8080 | REST API, 인증, DB, 국토부 프록시 |
+| **backend (FastAPI)** | Python 3.11 / LangChain / ChromaDB | 8000 | RAG 챗봇 SSE |
+| **MySQL** | MySQL 8 | 3306 | 영구 데이터 저장 |
 
 ---
 
-## ✨ 핵심 기능 (Key Features)
+## 핵심 기능
 
-### 1. 스마트 위저드 (Smart Wizard)
-사용자의 재무 상태를 3단계로 정밀하게 진단합니다.
-* **현재 자산:** 예적금, 주식, 기존 부동산 등 가용 자산 파악.
-* **현금 흐름:** 월 수입과 지출 분석. (30대 직장인 평균 생활비 등 스마트 가이드 제공)
-* **목표 설정:** 희망하는 서울 자치구 및 아파트 평형 선택.
+### 골든 크로스 시뮬레이터
+월별 복리 자산 성장 모델과 아파트 가격 예측 모델을 교차하여 매수 가능 시점(D-Day)을 계산합니다.
 
-### 2. 골든 크로스 시뮬레이터
-금융 공학 알고리즘을 통해 **D-Day**를 산출합니다.
-* **FV(Future Value) 공식:** 현재 저축액과 예상 수익률을 바탕으로 미래 자산 가치 계산.
-* **현실적 한도 계산:** LTV, DSR 규제를 반영하고 취득세 등 거래 비용(약 3.5%)을 미리 산입하여 '실제 매수 가능 금액' 제시.
+```
+A(t) = 현금 × (1 + r/12)^t + 월저축 × ((1+r/12)^t - 1) / (r/12)
+P(t) = 목표가 × (1 + 연간상승률)^(t/12)
+필요자본 = P(t) × (1 - LTV) + P(t) × 취득세율
+골든크로스: A(t) ≥ 필요자본 을 만족하는 최소 t
+```
 
-### 3. 리스크 관제탑 (Risk Control Tower)
-다양한 시나리오에 따른 스트레스 테스트를 수행합니다.
-* 금리 인상 시 대출 상환액 변동 시뮬레이션.
-* 부동산 가격 급등/하락에 따른 D-Day 변화 추적.
+### 리스크 스트레스 테스트
+- 금리 1~2% 상승 시 D-Day 지연 개월 계산
+- 주택 가격 10~20% 급등 시 시나리오 분석
 
-### 4. 징검다리 리포트 (Stepping Stone Strategy)
-목표 지역 진입이 당장 어려울 경우, 자산 형성의 중간 거점이 될 수 있는 **경기도 주요 요충지(성남, 광명, 과천 등)**의 대안 단지를 추천합니다.
+### 정책 대출 적격성 판정
+보금자리론 / 디딤돌 대출 / 청년 버팀목 전세자금 자동 판정
 
----
-
-## 🛠️ 기술적 원리 (Algorithm & Logic)
-
-### 📈 D-Day 산출 로직
-내 집 마련 가능 시점은 '목표 주택의 미래 가격'이 '미래 가용 자산(자기자본 + 대출 한도)'보다 작아지거나 같아지는 지점을 추적합니다.
-
-* **Target Price:** 목표 지역의 현재 시세에 예상 상승률을 반영한 미래 가치.
-* **Available Capital:** (현재 자산 * 복리 수익률) + (월 저축액 * 기간) + (LTV/DSR 기반 최대 대출액).
-* **Action Guide:** 사용자가 저축액을 **10%** 증액하거나 수익률을 **1%** 높일 때 단축되는 D-Day를 실시간으로 시각화하여 동기를 부여합니다.
+### AI 어드바이저 (RAG 챗봇)
+사용자의 현재 재무 데이터와 페이지 컨텍스트를 포함한 개인화 부동산 조언. ChromaDB + GPT 스트리밍.
 
 ---
 
-## 🤖 AI 어드바이저 (RAG 챗봇)
+## 빠른 시작
 
-우측 사이드바의 **인서울 AI 어드바이저**는 단순 LLM 챗봇이 아닌, 서비스 전용 지식 베이스를 활용한 **RAG(Retrieval-Augmented Generation)** 기반 어드바이저입니다. 사용자가 현재 보고 있는 페이지와 입력한 재무 데이터를 컨텍스트로 함께 전달하여, 개인화된 부동산 금융 조언을 제공합니다.
+### 요구사항
 
-### 전체 흐름
+| 항목 | 버전 |
+|------|------|
+| Java | 21 LTS |
+| Node.js | 20+ |
+| Python | 3.11+ |
+| Docker | 20+ |
+
+### 방법 1 — Make (권장)
+
+```bash
+# 최초 1회: 환경변수 파일 생성
+cp .env.example .env.local       # 프론트 환경변수
+cp backend/.env.example backend/.env  # FastAPI 환경변수 (OPENAI_API_KEY 입력)
+
+# 전체 스택 시작 (MySQL → Spring → FastAPI → Vite 순서)
+make dev
+
+# 개별 실행
+make db       # MySQL Docker 컨테이너만
+make spring   # Spring Boot만
+make fastapi  # FastAPI만
+make frontend # Vite 개발 서버만
+
+# 종료
+make stop
+
+# 상태 확인
+make status
+```
+
+### 방법 2 — Docker Compose (프로덕션)
+
+```bash
+# 환경변수 설정
+export MYSQL_ROOT_PASSWORD=your_password
+export JWT_SECRET=your-256bit-secret
+export OPENAI_API_KEY=sk-...
+# (선택) KAKAO_CLIENT_ID, GOOGLE_CLIENT_ID 등
+
+# 프론트엔드 빌드
+npm install && npm run build
+
+# 전체 스택 기동
+docker compose up -d
+
+# 로그 확인
+docker compose logs -f spring
+```
+
+### 방법 3 — 수동 실행
+
+<details>
+<summary>단계별 수동 실행</summary>
+
+**1. MySQL 시작**
+```bash
+docker run -d --name inseoul-mysql \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=inseoul \
+  -p 3306:3306 \
+  mysql:8.0 --character-set-server=utf8mb4
+```
+
+**2. Spring Boot 시작**
+```bash
+cd backend-spring
+./gradlew bootRun --args='--spring.profiles.active=local'
+# http://localhost:8080/api/health 확인
+# http://localhost:8080/swagger-ui/index.html Swagger UI
+```
+
+**3. FastAPI 시작**
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env  # OPENAI_API_KEY 입력
+python scripts/ingest.py   # 지식 베이스 인제스트 (최초 1회)
+uvicorn main:app --reload --port 8000
+```
+
+**4. 프론트엔드 시작**
+```bash
+# 루트 디렉터리
+cp .env.example .env.local  # VITE_API_BASE=http://localhost:8080 설정됨
+npm install
+npm run dev
+# http://localhost:5173
+```
+
+</details>
+
+---
+
+## 환경변수
+
+### 프론트엔드 (`.env.local`)
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `VITE_API_BASE` | `http://localhost:8080` | Spring Boot API 주소 |
+| `VITE_KAKAO_MAP_KEY` | — | 카카오 지도 SDK 키 |
+
+### Spring Boot (`application-local.yml` 또는 환경변수)
+
+| 환경변수 | 기본값 | 설명 |
+|----------|--------|------|
+| `JWT_SECRET` | dev 기본값 | HS256 서명 키 (prod에서 반드시 변경) |
+| `MOLIT_API_KEY` | — | 국토부 실거래가 API 키 ([data.go.kr](https://www.data.go.kr) 발급) |
+| `KAKAO_CLIENT_ID` | — | Kakao OAuth2 앱 키 |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth2 클라이언트 ID |
+| `CHATBOT_URL` | `http://127.0.0.1:8000` | FastAPI 챗봇 주소 |
+
+### FastAPI (`.env`)
+
+| 환경변수 | 설명 |
+|----------|------|
+| `OPENAI_API_KEY` | OpenAI API 키 (필수) |
+| `CHROMA_PERSIST_DIR` | ChromaDB 저장 경로 (기본: `./vectorstore`) |
+
+---
+
+## API 엔드포인트
+
+Swagger UI: **`http://localhost:8080/swagger-ui/index.html`**
+
+| 도메인 | 주요 엔드포인트 | 인증 |
+|--------|----------------|------|
+| **Auth** | `POST /api/auth/signup` `POST /api/auth/login` `POST /api/auth/refresh` `POST /api/auth/logout` | 일부 공개 |
+| **OAuth2** | `GET /oauth2/authorization/kakao` `GET /oauth2/authorization/google` | 공개 |
+| **User** | `GET /api/users/me` `PUT /api/users/me/profile` `PUT /api/users/me/sim-config` `DELETE /api/users/me` | JWT 필요 |
+| **Districts** | `GET /api/districts` `GET /api/districts/prices` `GET /api/districts/{code}/prices` | 공개 |
+| **Loans** | `GET /api/loans/products` `POST /api/loans/eligibility` | 공개 |
+| **Strategies** | `GET /api/strategies` `GET /api/strategies/{type}` | 공개 |
+| **Simulation** | `POST /api/simulation/golden-cross` `POST /api/simulation/stress-test` `POST /api/simulation/chart-data` | 공개 |
+| **Chat** | `POST /api/chat` (SSE) | 공개 |
+| **Health** | `GET /api/health` | 공개 |
+
+---
+
+## 인증 흐름
+
+```
+# 자체 로그인
+POST /api/auth/signup  →  { accessToken, refreshToken, user }
+POST /api/auth/login   →  { accessToken, refreshToken, user }
+POST /api/auth/refresh →  새 토큰 쌍 (refresh 토큰 회전)
+
+# OAuth2 (Kakao/Google)
+브라우저 → GET /oauth2/authorization/{provider}
+           → provider 동의 화면
+           → Spring 콜백 → JWT 발급
+           → 프론트 redirect: /#accessToken=...&refreshToken=...
+
+# 인증 필요 요청
+Authorization: Bearer {accessToken}
+```
+
+- Access Token: 15분 유효 (HS256)
+- Refresh Token: 7일 유효, 매 갱신 시 회전
+
+---
+
+## DB 스키마
+
+```
+users ─┬─ user_profiles      (재무 프로필)
+       ├─ user_sim_configs    (시뮬레이션 설정)
+       └─ oauth_accounts      (소셜 계정 연결)
+
+refresh_tokens               (JWT 갱신 토큰, SHA-256 해시 저장)
+
+districts ─── district_price_cache   (국토부 가격 24h 캐시)
+
+loan_products                (정책 대출 카탈로그)
+strategies ─── strategy_steps        (투자 전략 및 단계)
+```
+
+Flyway 마이그레이션: `backend-spring/src/main/resources/db/migration/`
+- `V1__init.sql` — 스키마 10개 테이블
+- `V2__seed_districts.sql` — 서울 25개 자치구
+- `V3__seed_loans_strategies.sql` — 정책 대출 + 전략 시드
+
+---
+
+## AI 어드바이저 (RAG 챗봇)
+
+FastAPI 기반 RAG 파이프라인이 Spring Boot를 통해 프록시됩니다.
 
 ```
 사용자 질문
     │
     ▼
-[Retriever] SentenceTransformer 임베딩 → ChromaDB 코사인 유사도 검색 (top-4 청크)
+Spring /api/chat (SSE 패스스루)
     │
     ▼
-[Prompt Builder] 시스템 역할 + 검색 문서 + 사용자 컨텍스트(페이지·자산·시뮬설정) + 대화 히스토리(최대 10턴)
-    │
-    ▼
-[OpenAI API] gpt-5-nano 스트리밍 호출
-    │
-    ▼
-[SSE 스트리밍] data: {"type": "delta", "content": "..."} → 프론트엔드 실시간 렌더링
+FastAPI /chat
+    ├─ SentenceTransformer 임베딩 → ChromaDB 코사인 유사도 검색 (top-4)
+    ├─ 시스템 프롬프트 구성 (페이지 컨텍스트 + 사용자 재무 데이터 + 히스토리)
+    └─ OpenAI GPT 스트리밍 → SSE data: {"type":"delta","content":"..."}
 ```
 
-### 지식 베이스
-
-`backend/knowledge/` 디렉터리의 Markdown 파일 5종이 RAG의 근거 문서입니다.
+**지식 베이스** (`backend/knowledge/`):
 
 | 파일 | 내용 |
 |------|------|
-| `calculation_logic.md` | D-Day 산출 공식, FV 계산, LTV·DSR 로직 |
-| `financial_concepts.md` | LTV, DSR, 취득세 등 금융 개념 설명 |
-| `loan_products.md` | 보금자리론, 디딤돌대출 등 대출 상품 정보 |
-| `seoul_districts.md` | 서울 자치구별 아파트 시세 및 특성 |
-| `strategies.md` | 징검다리 전략, 경기도 요충지 투자 전략 |
+| `calculation_logic.md` | D-Day 산출 공식, FV 계산, LTV/DSR |
+| `financial_concepts.md` | 금융 개념 설명 |
+| `loan_products.md` | 정책 대출 상품 |
+| `seoul_districts.md` | 서울 자치구별 시세 |
+| `strategies.md` | 징검다리 전략 |
 
-문서는 `##` 헤딩 기준으로 청킹(최대 500토큰, 50토큰 오버랩)된 뒤 `paraphrase-multilingual-MiniLM-L12-v2` 모델로 임베딩되어 ChromaDB에 저장됩니다.
+챗봇 히스토리는 localStorage에 저장됩니다 (서버 미저장).
 
-### 컨텍스트 인식
+---
 
-AI 어드바이저는 현재 상태를 시스템 프롬프트에 자동으로 포함합니다.
+## 프로젝트 구조
 
-- **현재 페이지**: 어느 화면에서 질문하는지 (대시보드, 리포트, 지도 등)
-- **사용자 프로필**: 보유 현금, 월 저축액, 연 소득, 목표 아파트 가격 등
-- **시뮬레이션 설정**: LTV 비율, 아파트 연간 상승률, 투자 수익률 등
-
-덕분에 같은 "LTV가 뭔가요?" 질문이라도 사용자의 실제 수치를 바탕으로 구체적인 답변이 제공됩니다. 각 페이지에는 **힌트 칩**도 표시되어 처음 사용자도 쉽게 질문을 시작할 수 있습니다.
-
-### 백엔드 실행 방법
-
-```bash
-cd backend
-
-# 1. 의존성 설치
-pip install -r requirements.txt
-
-# 2. 환경변수 설정
-cp .env.example .env
-# .env 파일에서 OPENAI_API_KEY 입력
-
-# 3. 지식 베이스 인제스트 (최초 1회 또는 knowledge/ 변경 시)
-python scripts/ingest.py
-
-# 4. FastAPI 서버 실행
-uvicorn main:app --reload --port 8000
+```
+InSeoul/
+├── src/                        # Vite + React 프론트엔드
+│   ├── pages/                  # 화면 컴포넌트
+│   ├── services/               # API 클라이언트
+│   │   ├── apiClient.js        # Axios + JWT 인터셉터
+│   │   ├── api.js              # 구 가격 데이터 (Spring 프록시)
+│   │   └── chatbotService.js   # 챗봇 SSE (Spring 프록시)
+│   ├── store/
+│   │   └── useAppStore.js      # Zustand 전역 상태 (인증 포함)
+│   └── utils/
+│       └── calculator.js       # 시뮬레이션 계산 (클라이언트 사이드)
+│
+├── backend-spring/             # Spring Boot 백엔드
+│   ├── src/main/java/com/inseoul/
+│   │   ├── auth/               # JWT, OAuth2, 회원가입/로그인
+│   │   ├── user/               # 프로필, 시뮬레이션 설정
+│   │   ├── district/           # 25개구 + 국토부 프록시
+│   │   ├── loan/               # 정책 대출 + 적격성
+│   │   ├── strategy/           # 투자 전략
+│   │   ├── simulation/         # 골든크로스 계산 엔진
+│   │   └── chat/               # FastAPI SSE 중계
+│   ├── src/main/resources/
+│   │   ├── db/migration/       # Flyway SQL
+│   │   └── mappers/            # MyBatis XML
+│   ├── docs/                   # API/DB/인증/통합 문서
+│   └── Dockerfile
+│
+├── backend/                    # FastAPI RAG 챗봇
+│   ├── api/chat.py
+│   ├── rag/                    # 임베딩/검색/프롬프트
+│   ├── knowledge/              # 지식 베이스 Markdown
+│   └── Dockerfile
+│
+├── nginx/nginx.conf            # 리버스 프록시 설정
+├── docker-compose.yml          # 전체 스택 컨테이너 정의
+├── Makefile                    # 개발 편의 명령어
+└── .env.example                # 환경변수 템플릿
 ```
 
-`.env.example`에서 설정 가능한 항목:
+---
 
-| 환경변수 | 기본값 | 설명 |
-|----------|--------|------|
-| `OPENAI_API_KEY` | — | OpenAI API 키 (필수) |
-| `CHROMA_PERSIST_DIR` | `./vectorstore` | ChromaDB 저장 경로 |
-| `ALLOWED_ORIGINS` | `http://localhost:5173` 등 | CORS 허용 출처 |
+## 문서
 
-프론트엔드에서 백엔드 주소를 변경하려면 `.env` 파일에 `VITE_CHATBOT_API_URL=http://...` 를 추가하세요.
+| 문서 | 경로 |
+|------|------|
+| API 명세 | `backend-spring/docs/API.md` |
+| DB 스키마 | `backend-spring/docs/DATA_MODEL.md` |
+| 인증 흐름 | `backend-spring/docs/AUTH.md` |
+| 외부 연동 | `backend-spring/docs/INTEGRATION.md` |
+| 스프린트 계획 | `backend-spring/docs/SPRINT_PLAN.md` |
 
 ---
 
-## 🔒 보안 및 신뢰성
-* **Local-First Data:** 사용자가 입력한 모든 민감한 재무 데이터는 서버에 저장되지 않고 브라우저의 로컬 스토리지에만 보관되어 개인정보 유출 우려가 없습니다.
-* **Transparent Logic:** 모든 계산 근거와 공식을 투명하게 안내하여 사용자가 시뮬레이션 결과를 신뢰할 수 있도록 돕습니다.
+## Issues / 기여
 
----
-
-## 🏃 시작하기 (Getting Started)
-
-1. **Welcome:** PM의 안내에 따라 현재 재무 상태를 입력하세요.
-2. **Simulation:** 실시간으로 변하는 차트를 통해 당신의 '골든 크로스' 지점을 확인하세요.
-3. **Action:** 제시된 'Action Guide'를 통해 오늘부터 당장 실행할 수 있는 변화를 확인하세요.
-
----
-
-## 🤝 기여 및 문의
-인서울 프로젝트는 더 정교한 알고리즘 고도화를 위해 열려 있습니다. 
-* **Issues:** 버그 리포트나 기능 제안은 Issue 탭을 이용해 주세요.
-
-**"당신의 서울 입성, 인서울 프로젝트가 데이터로 끝까지 함께하겠습니다."**
+버그 리포트나 기능 제안은 [Issues](../../issues) 탭을 이용해 주세요.
