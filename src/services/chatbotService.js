@@ -1,7 +1,10 @@
 /**
  * chatbotService.js — SSE 스트리밍 클라이언트
- * 백엔드 POST /chat 호출 후 async generator로 텍스트 청크를 yield한다.
+ * W7: FastAPI 직접 호출 → Spring 백엔드(/api/chat)로 전환
  */
+import { getTokens } from './apiClient';
+
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080';
 
 /**
  * @param {string} message
@@ -10,13 +13,17 @@
  * @yields {string} 텍스트 청크
  */
 export async function* sendChatMessage(message, history, context) {
-    const apiUrl = import.meta.env.VITE_CHATBOT_API_URL ?? 'http://127.0.0.1:8000';
+    const tokens = getTokens();
+    const headers = { 'Content-Type': 'application/json' };
+    if (tokens?.accessToken) {
+        headers.Authorization = `Bearer ${tokens.accessToken}`;
+    }
 
     let res;
     try {
-        res = await fetch(`${apiUrl}/chat`, {
+        res = await fetch(`${API_BASE}/api/chat`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ message, history, context }),
         });
     } catch (err) {
@@ -38,7 +45,7 @@ export async function* sendChatMessage(message, history, context) {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            buffer = lines.pop() ?? ''; // 마지막 불완전 라인은 버퍼에 보관
+            buffer = lines.pop() ?? '';
 
             for (const line of lines) {
                 if (!line.startsWith('data: ')) continue;
@@ -49,7 +56,7 @@ export async function* sendChatMessage(message, history, context) {
                 try {
                     event = JSON.parse(jsonStr);
                 } catch {
-                    continue; // 잘못된 JSON 건너뜀
+                    continue;
                 }
 
                 if (event.type === 'delta' && event.content) {
