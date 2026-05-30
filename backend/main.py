@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import chromadb
 from dotenv import load_dotenv
@@ -9,7 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.health import router as health_router
 from api.chat import router as chat_router
 
-load_dotenv()
+# 프로젝트 루트 .env 우선 로드, 없으면 현재 디렉터리 .env 시도
+_root_env = Path(__file__).parent.parent / '.env'
+if _root_env.exists():
+    load_dotenv(_root_env)
+else:
+    load_dotenv()
 
 
 @asynccontextmanager
