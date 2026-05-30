@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAppStore from '../store/useAppStore';
 
 
@@ -17,8 +17,35 @@ const NAV_ITEMS = [
  */
 export default function Header({ showSearch = false, onSearch }) {
     const location = useLocation();
-    const { isDark, toggleDark, toggleChat } = useAppStore();
+    const navigate = useNavigate();
+    const { isDark, toggleDark, toggleChat, isLoggedIn, clearAuth, authUser } = useAppStore();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleOutsideClick = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => document.removeEventListener('mousedown', handleOutsideClick);
+    }, []);
+
+    const handleUserClick = () => {
+        if (isLoggedIn()) {
+            setDropdownOpen((prev) => !prev);
+        } else {
+            navigate('/login');
+        }
+    };
+
+    const handleLogout = () => {
+        clearAuth();
+        setDropdownOpen(false);
+        navigate('/login');
+    };
 
     const isActive = (tab) => {
         if (tab === 'input') return location.pathname === '/';
@@ -115,16 +142,36 @@ export default function Header({ showSearch = false, onSearch }) {
                         </span>
                     </button>
 
-                    {/* 사용자 아이콘 */}
-                    <div
-                        className="hidden sm:flex bg-secondary/30 dark:bg-slate-800 rounded-full size-11 items-center justify-center cursor-pointer interactive-element hover:bg-secondary/50 dark:hover:bg-slate-700 shrink-0"
-                        aria-label="마이페이지"
-                        role="button"
-                        tabIndex={0}
-                    >
-                        <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 transition-colors !text-[20px]">
-                            person
-                        </span>
+                    {/* 사용자 아이콘 + 드롭다운 */}
+                    <div className="relative hidden sm:block" ref={dropdownRef}>
+                        <button
+                            onClick={handleUserClick}
+                            className="flex bg-secondary/30 dark:bg-slate-800 rounded-full size-11 items-center justify-center cursor-pointer interactive-element hover:bg-secondary/50 dark:hover:bg-slate-700 transition-colors duration-300 shrink-0"
+                            aria-label={isLoggedIn() ? '계정 메뉴' : '로그인'}
+                        >
+                            <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 transition-colors !text-[20px]">
+                                person
+                            </span>
+                        </button>
+
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
+                                <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                                        {authUser?.nickname ?? authUser?.email ?? ''}
+                                    </p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                        {authUser?.email ?? ''}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                                >
+                                    로그아웃
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* 햄버거 메뉴 (모바일) */}
