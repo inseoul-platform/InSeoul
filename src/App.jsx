@@ -7,18 +7,30 @@ import DashboardScreen from './pages/DashboardScreen';
 import ReportScreen from './pages/ReportScreen';
 import MapScreen from './pages/MapScreen';
 import StrategyDetailScreen from './pages/StrategyDetailScreen';
+import LoginScreen from './pages/LoginScreen';
 
 export default function App() {
-  const { initDark } = useAppStore();
+  const { initDark, isLoggedIn, hydrateFromServer, clearAuth } = useAppStore();
 
-  // 다크모드 초기 적용 (localStorage 복원)
   useEffect(() => {
     initDark();
   }, [initDark]);
 
+  // 로그인 상태면 서버 동기화 + 로그아웃 이벤트 감지
+  useEffect(() => {
+    if (isLoggedIn()) {
+      hydrateFromServer();
+    }
+
+    const onLogout = () => clearAuth();
+    window.addEventListener('auth:logout', onLogout);
+    return () => window.removeEventListener('auth:logout', onLogout);
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<LoginScreen />} />
         <Route element={<Layout />}>
           <Route path="/" element={<DataInputScreen />} />
           <Route path="/dashboard" element={<DashboardScreen />} />

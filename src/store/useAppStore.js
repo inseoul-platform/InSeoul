@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import apiClient, { setTokens, clearTokens, getTokens } from '../services/apiClient';
 
 /**
  * UserProfile — 사용자 입력 데이터 (만 원 단위)
@@ -29,6 +30,73 @@ const defaultSimConfig = {
 const useAppStore = create(
     persist(
         (set, get) => ({
+            // ── 인증 ──────────────────────────────────
+            authUser: null, // { id, email, nickname, provider }
+
+            setAuth: (user, accessToken, refreshToken) => {
+                setTokens(accessToken, refreshToken);
+                set({ authUser: user });
+            },
+
+            clearAuth: () => {
+                clearTokens();
+                set({ authUser: null });
+            },
+
+            isLoggedIn: () => {
+                const tokens = getTokens();
+                return !!tokens?.accessToken && !!get().authUser;
+            },
+
+            /** 서버에서 최신 프로필/simConfig 가져와 store에 반영 */
+            hydrateFromServer: async () => {
+                try {
+                    const { data: res } = await apiClient.get('/api/users/me');
+                    const { user, profile, simConfig } = res.data;
+                    if (user) set({ authUser: user });
+                    if (profile) {
+                        set({ userProfile: {
+                            cash: profile.cash,
+                            monthlySavings: profile.monthlySavings,
+                            targetAmount: profile.targetAmount,
+                            age: profile.age,
+                            income: profile.income,
+                        }});
+                    }
+                    if (simConfig) {
+                        set({ simConfig: {
+                            savingsIncreaseRate: Number(simConfig.savingsIncreaseRate),
+                            investmentReturnRate: Number(simConfig.investmentReturnRate),
+                            apartmentAnnualRise: Number(simConfig.apartmentAnnualRise),
+                            ltvRatio: Number(simConfig.ltvRatio),
+                            acquisitionTaxRate: Number(simConfig.acquisitionTaxRate),
+                        }});
+                    }
+                } catch (e) {
+                    console.error('hydrateFromServer failed:', e);
+                }
+            },
+
+            /** 로컬 userProfile 변경을 서버에 푸시 */
+            pushProfile: async () => {
+                const { userProfile } = get();
+                try {
+                    await apiClient.put('/api/users/me/profile', userProfile);
+                } catch (e) {
+                    console.error('pushProfile failed:', e);
+                }
+            },
+
+            /** 로컬 simConfig 변경을 서버에 푸시 */
+            pushSimConfig: async () => {
+                const { simConfig } = get();
+                try {
+                    await apiClient.put('/api/users/me/sim-config', simConfig);
+                } catch (e) {
+                    console.error('pushSimConfig failed:', e);
+                }
+            },
+
             // ── 사용자 프로필 ─────────────────────────
             userProfile: { ...defaultUserProfile },
 
@@ -99,6 +167,7 @@ const useAppStore = create(
         {
             name: 'inseoul-storage', // localStorage key
             partialize: (state) => ({
+                authUser: state.authUser,
                 userProfile: state.userProfile,
                 simConfig: state.simConfig,
                 isDark: state.isDark,
