@@ -7,5 +7,13 @@ export default defineConfig({
   server: {
     port: 5173,
     host: 'localhost'
-  }
+  },
+  test: {
+    environment: 'node',
+    coverage: {
+      provider: 'istanbul',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/utils/**'],
+    },
+  },
 })
