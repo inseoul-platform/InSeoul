@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:inseoul-test;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=VALUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 5
+  flyway:
+    enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: dummy-kakao
+            client-secret: dummy-kakao-secret
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-authentication-method: client_secret_post
+            scope: openid, profile_nickname
+          google:
+            client-id: dummy-google
+            client-secret: dummy-google-secret
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid, profile, email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            jwk-set-uri: https://kauth.kakao.com/.well-known/jwks.json
+            user-name-attribute: sub
+
+app:
+  jwt:
+    secret: test-jwt-secret-key-for-ci-that-is-32chars!!
+    access-expiry-minutes: 15
+    refresh-expiry-days: 7
+  oauth2:
+    redirect-uri: http://localhost
+
+molit:
+  api-key:
+
+chatbot:
+  url: http://localhost:8001
+
+logging:
+  level:
+    com.inseoul: WARN
+    org.mybatis: WARN
+    org.springframework.security: WARN

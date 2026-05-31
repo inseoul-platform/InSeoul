@@ -1,0 +1,22 @@
+# CI 환경 오버라이드 — docker-compose.yml 위에 레이어링
+# 사용법: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+
+services:
+  mysql:
+    restart: "no"
+
+  spring:
+    restart: "no"
+
+  fastapi:
+    restart: "no"
+    volumes:
+      - type: tmpfs
+        target: /app/vectorstore
+
+  nginx:
+    restart: "no"
+
+volumes:
+  fastapi-vectorstore:
+    driver: local
