@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import useAppStore from '../store/useAppStore';
 import { setTokens } from '../services/apiClient';
@@ -82,7 +82,14 @@ export default function LoginScreen() {
             <div className="w-full max-w-md">
                 {/* 로고 */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-white">InSeoul</h1>
+                    <Link
+                        to="/"
+                        className="inline-flex items-center justify-center gap-2 mb-2 hover:opacity-80 transition-opacity"
+                        aria-label="인서울 홈으로 이동"
+                    >
+                        <span className="material-symbols-outlined !text-4xl !text-[#a2d2ff]">apartment</span>
+                        <span className="text-3xl font-bold text-white">인서울</span>
+                    </Link>
                     <p className="text-gray-400 mt-2 text-sm">서울 아파트 구매 시뮬레이터</p>
                 </div>
 
