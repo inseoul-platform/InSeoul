@@ -148,6 +148,8 @@ export default function Header({ showSearch = false, onSearch }) {
                             onClick={handleUserClick}
                             className="flex bg-secondary/30 dark:bg-slate-800 rounded-full size-11 items-center justify-center cursor-pointer interactive-element hover:bg-secondary/50 dark:hover:bg-slate-700 transition-colors duration-300 shrink-0"
                             aria-label={isLoggedIn() ? '계정 메뉴' : '로그인'}
+                            aria-haspopup={isLoggedIn() ? 'menu' : undefined}
+                            aria-expanded={isLoggedIn() ? dropdownOpen : undefined}
                         >
                             <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 transition-colors !text-[20px]">
                                 person
@@ -155,7 +157,11 @@ export default function Header({ showSearch = false, onSearch }) {
                         </button>
 
                         {dropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
+                            <div
+                                role="menu"
+                                aria-label="계정 메뉴"
+                                className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50"
+                            >
                                 <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-700">
                                     <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                                         {authUser?.nickname ?? authUser?.email ?? ''}
@@ -165,6 +171,7 @@ export default function Header({ showSearch = false, onSearch }) {
                                     </p>
                                 </div>
                                 <button
+                                    role="menuitem"
                                     onClick={handleLogout}
                                     className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                                 >
@@ -190,7 +197,10 @@ export default function Header({ showSearch = false, onSearch }) {
             </div>
 
             {/* 모바일 드롭다운 내비게이션 */}
-            <div
+            <nav
+                role="navigation"
+                aria-label="모바일 네비게이션"
+                aria-hidden={!isMenuOpen}
                 className={`${isMenuOpen ? 'flex' : 'hidden'
                     } md:hidden flex-col bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-4 gap-1 shadow-inner`}
             >
@@ -208,7 +218,7 @@ export default function Header({ showSearch = false, onSearch }) {
                         {label}
                     </Link>
                 ))}
-            </div>
+            </nav>
         </header>
     );
 }

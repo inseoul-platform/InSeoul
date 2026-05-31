@@ -8,6 +8,7 @@ import ReportScreen from './pages/ReportScreen';
 import MapScreen from './pages/MapScreen';
 import StrategyDetailScreen from './pages/StrategyDetailScreen';
 import LoginScreen from './pages/LoginScreen';
+import PrivacyScreen from './pages/PrivacyScreen';
 
 export default function App() {
   const { initDark, isLoggedIn, hydrateFromServer, clearAuth } = useAppStore();
@@ -31,6 +32,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/privacy" element={<PrivacyScreen />} />
         <Route element={<Layout />}>
           <Route path="/" element={<DataInputScreen />} />
           <Route path="/dashboard" element={<DashboardScreen />} />
