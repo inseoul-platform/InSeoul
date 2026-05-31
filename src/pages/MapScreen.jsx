@@ -649,7 +649,7 @@ export default function MapScreen() {
     // UI 상태
     const [tradeType, setTradeType] = useState('매매');
     const [selectedSize, setSelectedSize] = useState('20평형대');
-    const [selectedAge, setSelectedAge] = useState('구축 (10년 이상)');
+    const [selectedAge] = useState('구축 (10년 이상)');
     const [zoomLevel, setZoomLevel] = useState(8);
     const [mapCenter, setMapCenter] = useState({ lat: 37.5665, lng: 126.9780 });
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -657,7 +657,6 @@ export default function MapScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingStatus, setLoadingStatus] = useState({ text: '데이터 연결 중...', progress: 0 });
 
-    const mapRef = useRef(null);
     const hasAttemptedFetch = useRef(false);
 
     // ── 데이터 로딩 ──
