@@ -19,6 +19,7 @@ W8   QA & 배포        Docker Compose · Nginx · 배포 준비
 W9   README          아키텍처 전면 문서화
 W10  자동화           Makefile 개발 편의 명령어
 W11  환경변수 통합    .env 단일화 · .env.example 템플릿
+W12  CI 파이프라인    GitHub Actions · 유닛 테스트 · API 스모크 테스트
 ```
 
 ---
@@ -38,6 +39,7 @@ W11  환경변수 통합    .env 단일화 · .env.example 템플릿
 | W9 | README 업데이트 | ✅ 완료 | [sprints/W9.md](sprints/W9.md) |
 | W10 | 개발 자동화 (Makefile) | ✅ 완료 | [sprints/W10.md](sprints/W10.md) |
 | W11 | 환경변수 통합 (.env) | ✅ 완료 | [sprints/W11.md](sprints/W11.md) |
+| W12 | GitHub Actions CI 파이프라인 | ✅ 완료 | [sprints/W12.md](sprints/W12.md) |
 
 > 🔶 = 코드 완료, 실 API 키 필요한 항목 잔여
 
