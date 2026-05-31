@@ -4,6 +4,8 @@ import {
     ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import useAppStore from '../store/useAppStore';
+
+const DEFAULT_SIM = { savingsIncreaseRate: 5, investmentReturnRate: 8, apartmentAnnualRise: 3, ltvRatio: 0.5 };
 import {
     calcGoldenCross, buildChartData, calcRequiredCapital,
     formatKRW, formatYearMonth,
@@ -57,7 +59,7 @@ function SliderControl({ id, label, min, max, step = 1, value, onChange, formatV
 }
 
 export default function DashboardScreen() {
-    const { userProfile, simConfig, setSimConfig } = useAppStore();
+    const { userProfile, simConfig, setSimConfig, resetSimConfig } = useAppStore();
     const [savingsRate, setSavingsRate] = useState(simConfig.savingsIncreaseRate);
     const [returnRate, setReturnRate] = useState(simConfig.investmentReturnRate);
     const [aptRise, setAptRise] = useState(simConfig.apartmentAnnualRise);
@@ -79,7 +81,24 @@ export default function DashboardScreen() {
     }), [simConfig, savingsRate, returnRate, aptRise, ltvPct]);
 
     const goldenCross = useMemo(() => hasProfile ? calcGoldenCross(effectiveProfile, activeConfig) : null, [effectiveProfile, activeConfig, hasProfile]);
-    const chartData = useMemo(() => hasProfile ? buildChartData(effectiveProfile, activeConfig, 120) : [], [effectiveProfile, activeConfig, hasProfile]);
+
+    const totalMonths = useMemo(() => {
+        if (!hasProfile) return 120;
+        if (!goldenCross) return 600;
+        return Math.max(120, goldenCross.months + 24);
+    }, [hasProfile, goldenCross]);
+
+    const chartData = useMemo(() => {
+        if (!hasProfile) return [];
+        return buildChartData(effectiveProfile, activeConfig, totalMonths);
+    }, [effectiveProfile, activeConfig, hasProfile, totalMonths]);
+
+    const xAxisTicks = useMemo(() => {
+        const step = totalMonths >= 360 ? 60 : 12;
+        const ticks = [];
+        for (let m = 0; m <= totalMonths; m += step) ticks.push(m);
+        return ticks;
+    }, [totalMonths]);
     const { requiredCapital, loanAmount, tax } = useMemo(() => {
         if (!hasProfile) return { requiredCapital: 0, loanAmount: 0, tax: 0 };
         return calcRequiredCapital(userProfile.targetAmount, ltvPct / 100, simConfig.acquisitionTaxRate);
@@ -89,8 +108,15 @@ export default function DashboardScreen() {
         setSimConfig({ savingsIncreaseRate: savingsRate, investmentReturnRate: returnRate, apartmentAnnualRise: aptRise, ltvRatio: ltvPct / 100 });
     }, [savingsRate, returnRate, aptRise, ltvPct, setSimConfig]);
 
-    const crossYear = goldenCross?.months != null
-        ? chartData.find((d) => d.month >= goldenCross.months)?.year : null;
+    const handleReset = useCallback(() => {
+        resetSimConfig();
+        setSavingsRate(DEFAULT_SIM.savingsIncreaseRate);
+        setReturnRate(DEFAULT_SIM.investmentReturnRate);
+        setAptRise(DEFAULT_SIM.apartmentAnnualRise);
+        setLtvPct(Math.round(DEFAULT_SIM.ltvRatio * 100));
+    }, [resetSimConfig]);
+
+    const crossMonth = goldenCross?.months ?? null;
 
     return (
         <div className="flex flex-col overflow-x-hidden">
@@ -145,13 +171,25 @@ export default function DashboardScreen() {
 
                             <div className="w-full h-[260px] sm:h-[320px]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                                    <LineChart data={chartData} margin={{ top: 28, right: 8, left: 0, bottom: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(100,116,139,0.1)" />
-                                        <XAxis dataKey="year" tick={{ fontSize: 11, fill: '#94a3b8' }} interval={3} tickLine={false} />
+                                        <XAxis
+                                            dataKey="month"
+                                            type="number"
+                                            domain={[0, totalMonths]}
+                                            ticks={xAxisTicks}
+                                            tickFormatter={(m) => {
+                                                const d = new Date();
+                                                d.setMonth(d.getMonth() + m);
+                                                return `${String(d.getFullYear()).slice(2)}년`;
+                                            }}
+                                            tick={{ fontSize: 11, fill: '#94a3b8' }}
+                                            tickLine={false}
+                                        />
                                         <YAxis tickFormatter={(v) => `${(v / 10000).toFixed(0)}억`} tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={42} />
                                         <Tooltip content={<CustomTooltip />} />
-                                        {crossYear && (
-                                            <ReferenceLine x={crossYear} stroke="#a2d2ff" strokeDasharray="4 4"
+                                        {crossMonth !== null && (
+                                            <ReferenceLine x={crossMonth} stroke="#a2d2ff" strokeDasharray="4 4"
                                                 label={{ value: '🏆 골든크로스', position: 'top', fontSize: 11, fill: '#a2d2ff' }} />
                                         )}
                                         <Line type="monotone" dataKey="asset" name="내 자산" stroke="#a2d2ff" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: '#a2d2ff' }} isAnimationActive={false} />
@@ -168,9 +206,14 @@ export default function DashboardScreen() {
                                     <h3 className="text-base sm:text-lg font-semibold flex items-center gap-2">
                                         <span className="material-symbols-outlined text-primary !text-xl">tune</span>시뮬레이션 설정
                                     </h3>
-                                    <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full font-medium flex items-center gap-1">
-                                        <span className="material-symbols-outlined !text-xs">sync</span>실시간
-                                    </span>
+                                    <button
+                                        onClick={handleReset}
+                                        className="text-xs px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 rounded-full font-medium flex items-center gap-1 transition-colors"
+                                        aria-label="시뮬레이션 설정 초기화"
+                                        title="기본값으로 초기화"
+                                    >
+                                        <span className="material-symbols-outlined !text-xs">refresh</span>초기화
+                                    </button>
                                 </div>
                                 <div className="flex flex-col gap-5">
                                     <SliderControl id="slider-savings" label="연 저축액 증가율" min={0} max={30} value={savingsRate} onChange={setSavingsRate} formatValue={(v) => `${v}%`} />
