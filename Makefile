@@ -14,7 +14,8 @@ SHELL := /bin/bash
 # ── 경로 ─────────────────────────────────────────────────────
 ROOT_DIR   := $(shell pwd)
 SPRING_DIR := $(ROOT_DIR)/backend-spring
-FASTAPI_DIR := $(ROOT_DIR)/backend
+FASTAPI_DIR := $(ROOT_DIR)/backend-chatbot
+FRONTEND_DIR := $(ROOT_DIR)/frontend
 
 # ── PID 파일 ─────────────────────────────────────────────────
 SPRING_PID  := /tmp/inseoul-spring.pid
@@ -295,11 +296,11 @@ frontend:
 		echo "$(GREEN)● Vite 이미 실행 중 (PID $$(cat $(VITE_PID)))$(RESET)"; \
 	else \
 		echo "$(YELLOW)▶ Vite 개발 서버 시작 (백그라운드)$(RESET)"; \
-		if [ ! -d node_modules ]; then \
+		if [ ! -d $(FRONTEND_DIR)/node_modules ]; then \
 			echo "$(YELLOW)  npm install 실행 중...$(RESET)"; \
-			npm install --silent; \
+			cd $(FRONTEND_DIR) && npm install --silent; \
 		fi; \
-		npm run dev > $(VITE_LOG) 2>&1 & \
+		cd $(FRONTEND_DIR) && npm run dev > $(VITE_LOG) 2>&1 & \
 		echo $$! > $(VITE_PID); \
 		echo "  PID $$(cat $(VITE_PID)) | 로그: $(VITE_LOG)"; \
 		echo "  $(CYAN)http://localhost:5173$(RESET)"; \
@@ -322,7 +323,7 @@ frontend-stop:
 build: build-frontend build-spring
 	@echo "$(GREEN)✅  빌드 완료$(RESET)"
 	@echo "  Spring JAR: $(SPRING_DIR)/build/libs/"
-	@echo "  Frontend  : $(ROOT_DIR)/dist/"
+	@echo "  Frontend  : $(FRONTEND_DIR)/dist/"
 
 build-spring:
 	@echo "$(YELLOW)▶ Spring Boot JAR 빌드$(RESET)"
@@ -332,8 +333,8 @@ build-spring:
 
 build-frontend:
 	@echo "$(YELLOW)▶ 프론트엔드 빌드$(RESET)"
-	@[ ! -d node_modules ] && npm install --silent || true
-	@npm run build
+	@[ ! -d $(FRONTEND_DIR)/node_modules ] && cd $(FRONTEND_DIR) && npm install --silent || true
+	@cd $(FRONTEND_DIR) && npm run build
 	@echo "$(GREEN)✅  프론트엔드 빌드 완료$(RESET)"
 
 # ════════════════════════════════════════════════════════════
@@ -379,7 +380,7 @@ seed:
 clean:
 	@echo "$(YELLOW)▶ 빌드 산출물 정리$(RESET)"
 	@cd $(SPRING_DIR) && ./gradlew clean --no-daemon -q 2>/dev/null || true
-	@rm -rf $(ROOT_DIR)/dist
+	@rm -rf $(FRONTEND_DIR)/dist
 	@rm -f $(SPRING_PID) $(FASTAPI_PID) $(VITE_PID)
 	@rm -f $(SPRING_LOG) $(FASTAPI_LOG) $(VITE_LOG)
 	@echo "$(GREEN)✅  정리 완료$(RESET)"
