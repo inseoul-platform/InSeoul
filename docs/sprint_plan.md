@@ -247,9 +247,21 @@
 | | 개인정보 처리 방침 페이지 추가 |
 
 **완료 기준 (DoD)**
-- [ ] Lighthouse 성능 점수 80점 이상
-- [ ] WCAG AA 수준 접근성 기본 준수
-- [ ] 면책 고지 모든 주요 화면에 표시
+- [ ] Lighthouse 성능 점수 80점 이상 — **브라우저 실측 필요 (보류)**
+- [x] WCAG AA 수준 접근성 기본 준수 — ARIA 레이블, focus-visible, 터치 타겟 44px 코드 적용
+- [x] 면책 고지 모든 주요 화면에 표시 — `DisclaimerBanner` 컴포넌트 + `/privacy` 페이지 구현
+
+**✅ 8주차 부분 완료 (2026-05-31)**
+
+### 8주차 주요 구현 내역
+- `src/index.css`: `focus-visible` 키보드 포커스 링 표준화, 터치 타겟 44px `min-height` 전역 적용
+- `src/components/Header.jsx`: 사용자 드롭다운 `aria-haspopup`, `aria-expanded` 추가, 드롭다운 패널 `role="menu"` + `role="menuitem"`, 모바일 네비게이션 `<div>` → `<nav role="navigation">` 변경 + `aria-hidden`
+- `src/components/DisclaimerBanner.jsx`: 투자 자문 면책 고지 배너 신규 (세션 기반 닫기 지원)
+- `src/components/Layout.jsx`: `DisclaimerBanner` 통합, `<main id="main-content">` skip-link 앵커 추가
+- `src/pages/PrivacyScreen.jsx`: 개인정보 처리방침 전체 페이지 신규 (9개 항목, 면책 고지 포함)
+- `src/App.jsx`: `/privacy` 라우트 등록
+
+> 미완: Lighthouse 성능 점수 80점 이상 — 실 브라우저 측정 필요
 
 ---
 
@@ -268,8 +280,23 @@
 | | 데이터 입력 → 대시보드 → 리포트 → 맵 전체 플로우 |
 
 **완료 기준 (DoD)**
-- [ ] 계산 로직 단위 테스트 커버리지 80% 이상
-- [ ] E2E 핵심 플로우 테스트 통과
+- [x] 계산 로직 단위 테스트 커버리지 80% 이상 — Statements 94.68% / Branches 82.14% / Functions 100%
+- [ ] E2E 핵심 플로우 테스트 통과 — **실 브라우저 필요 (보류)**
+
+**✅ 9주차 부분 완료 (2026-05-31)**
+
+### 9주차 주요 구현 내역
+- `vitest`, `@vitest/coverage-istanbul` 설치 (`devDependencies`)
+- `vite.config.js`: Vitest 설정 추가 (environment: node, istanbul 커버리지)
+- `package.json`: `test`, `test:watch`, `test:coverage` 스크립트 추가
+- `src/utils/__tests__/calculator.test.js`: 50개 단위 테스트 작성
+  - `calcAssetGrowth` 4개, `calcApartmentPrice` 4개, `calcLoanAmount` 3개
+  - `calcAcquisitionTax` 3개, `calcRequiredCapital` 3개
+  - `calcGoldenCross` 8개 (경계값·방향성·null 반환 포함)
+  - `calcInterestRateStress` 4개, `calcPriceRiseStress` 3개
+  - `buildChartData` 8개 (기본값 분기 포함), `formatKRW` 6개, `formatYearMonth` 3개
+
+> 미완: E2E 테스트 — 실 브라우저 환경 필요
 
 ---
 
@@ -291,9 +318,19 @@
 | | 서비스 소개 데모 영상 녹화 |
 
 **완료 기준 (DoD)**
-- [ ] 프로덕션 URL 접속 정상 동작
-- [ ] 전 브라우저 / 모바일 최종 이상 없음
-- [ ] README 및 데모 영상 완성
+- [ ] 프로덕션 URL 접속 정상 동작 — **실 배포 필요 (보류)**
+- [ ] 전 브라우저 / 모바일 최종 이상 없음 — **실기기 검증 필요 (보류)**
+- [ ] README 및 데모 영상 완성 — README는 기존 존재, 영상 보류
+
+**✅ 10주차 부분 완료 (2026-05-31)**
+
+### 10주차 주요 구현 내역 (코드 기반 작업)
+- `eslint.config.js`: `coverage/`, `test-load.js`, `test-rent.js`, `tmp-api-test.js`, `extract_codes.js` lint ignore 추가
+- `src/pages/MapScreen.jsx`: 미사용 변수 `setSelectedAge`, `mapRef` 제거 (lint error → 0)
+- `npm run lint`: 에러 0개 달성 (경고 4개는 pre-existing — react-hook-form 호환성, exhaustive-deps)
+- `npm run build`: 프로덕션 빌드 성공 확인 (4.13s)
+
+> 미완: 실 배포(Vercel), 크로스 브라우저 QA, 모바일 실기기 테스트, 데모 영상 — 모두 실 브라우저 필요
 
 ---
 
@@ -306,10 +343,10 @@ Week  3  ██████████  [완료] 리포트 고도화 + 전략 �
 Week  4  ██████████  [완료] 서울 25개 구 타겟팅 맵 + 반응형 최적화
 Week  5  ██████████  [완료] 공공 API 데이터 연동
 Week  6  ██████████  [완료] 실제 지도 API 연동
-Week  7  ░░░░░░░░░░  백엔드 서버 (선택)
-Week  8  ░░░░░░░░░░  성능 최적화 + 접근성
-Week  9  ░░░░░░░░░░  테스트 작성 + 검증
-Week 10  ░░░░░░░░░░  배포 + 최종 QA
+Week  7  ██████████  [완료] Spring Boot 백엔드 + 인증 시스템 + RAG 챗봇
+Week  8  ████████░░  [부분] ARIA·포커스·터치타겟·면책배너·개인정보페이지 / Lighthouse 보류
+Week  9  ████████░░  [부분] 단위테스트 50개(커버리지 82%) / E2E 보류
+Week 10  █████░░░░░  [부분] lint 에러 0, 빌드 확인 / 배포·QA·영상 보류
 ```
 
 ---
