@@ -330,6 +330,16 @@
 - `npm run lint`: 에러 0개 달성 (경고 4개는 pre-existing — react-hook-form 호환성, exhaustive-deps)
 - `npm run build`: 프로덕션 빌드 성공 확인 (4.13s)
 
+### UI 버그 수정 및 개선 (2026-05-31)
+- `src/pages/LoginScreen.jsx`: 상단 "InSeoul" 텍스트 → `apartment` 아이콘 + "인서울" 홈 링크(`<Link to="/">`)로 교체
+- `src/pages/DashboardScreen.jsx`:
+  - 시뮬레이션 설정 "실시간" 뱃지 → 초기화 버튼으로 교체 (클릭 시 슬라이더 4개 기본값 복원)
+  - 차트 범위 고정 120개월 → 동적 계산 (`goldenCross.months + 24`, 불가 시 600개월)
+  - X축 `dataKey` 문자열 `"year"` → 숫자 `"month"` 전환으로 activeDot 위치 오프셋 버그 수정
+  - 30년(360개월) 이상 범위 시 X축 레이블 1년 → 5년 단위로 자동 전환
+  - 차트 상단 여백 확대 (top 8 → 28) — "골든크로스" 레이블 잘림 수정
+- `src/components/Layout.jsx`: 루트 `min-h-screen` → `h-screen overflow-hidden` 변경으로 AI 어드바이저 사이드바를 스크롤 위치 무관하게 뷰포트 높이에 고정
+
 > 미완: 실 배포(Vercel), 크로스 브라우저 QA, 모바일 실기기 테스트, 데모 영상 — 모두 실 브라우저 필요
 
 ---
